@@ -1,6 +1,7 @@
-# Securing Smart Contracts on the Celo Blockchain with Mythril: A Guide to Best Practices and Tools
+# Securing Smart Contracts on the Celo Blockchain With Mythril: A Guide to Best Practices and Tools
+
 ## Table of Contents
-- [Securing Smart Contracts on the Celo Blockchain with Mythril: A Guide to Best Practices and Tools](#securing-smart-contracts-on-the-celo-blockchain-with-mythril-a-guide-to-best-practices-and-tools)
+- [Securing Smart Contracts on the Celo Blockchain With Mythril: A Guide to Best Practices and Tools](#securing-smart-contracts-on-the-celo-blockchain-with-mythril-a-guide-to-best-practices-and-tools)
   - [Table of Contents](#table-of-contents)
   - [Prerequisites](#prerequisites)
   - [Introduction](#introduction)
@@ -8,10 +9,10 @@
   - [Security Risks in Smart Contracts](#security-risks-in-smart-contracts)
   - [Introduction to Mythril](#introduction-to-mythril)
   - [Installing and Configuring Mythril](#installing-and-configuring-mythril)
-  - [Analyzing Smart Contracts with Mythril](#analyzing-smart-contracts-with-mythril)
+  - [Analyzing Smart Contracts With Mythril](#analyzing-smart-contracts-with-mythril)
   - [Best Practices for Securing Smart Contracts](#best-practices-for-securing-smart-contracts)
-  - [Implementing a Voting System Smart Contract on Celo with Mythril](#implementing-a-voting-system-smart-contract-on-celo-with-mythril)
-  - [Securing the Smart Contract with Mythril](#securing-the-smart-contract-with-mythril)
+  - [Implementing a Voting System Smart Contract on Celo With Mythril](#implementing-a-voting-system-smart-contract-on-celo-with-mythril)
+  - [Securing the Smart Contract With Mythril](#securing-the-smart-contract-with-mythril)
   - [Deploying the Smart Contract to the Celo Blockchain](#deploying-the-smart-contract-to-the-celo-blockchain)
   - [Deploying the Smart Contract](#deploying-the-smart-contract)
   - [Conclusion](#conclusion)
@@ -19,16 +20,16 @@
 ## Prerequisites
 1. Basic knowledge of blockchain technology
 2. Basic JavaScript programming skills
-3. Basic Solidity programing skills
+3. Basic Solidity programming skills
 4. Basic understanding of security concepts in software development
 
 
 ## Introduction
-Digital contracts that self-execute and automatically uphold an agreement's terms and conditions are known as smart contracts. They can be used to facilitate and automate a variety of transactions without the use of middlemen because they are driven by blockchain technology.
+Digital contracts that self-execute and automatically uphold an agreement's terms and conditions are known as [smart contracts](https://ethereum.org/en/developers/docs/smart-contracts/). They can be used to facilitate and automate a variety of transactions without the use of middlemen because they are driven by blockchain technology.
 
 Smart contracts have a lot of advantages, but they also carry security dangers. It is crucial to take steps to secure smart contracts since their weaknesses could lead to the loss of money or other important assets.
 
-This tutorial will outline the best practices for securing smart contracts and show how to utilize Mythril, a well-known security tool, to protect smart contracts on the Celo blockchain.
+This tutorial will outline the best practices for securing smart contracts and show how to utilize [Mythril](https://mythril-classic.readthedocs.io/en/master/about.html), a well-known security tool, to protect smart contracts on the Celo blockchain.
 
 ## Understanding Smart Contracts on the Celo Blockchain
 
@@ -42,11 +43,11 @@ Celo's smart contracts are utilized for a variety of reasons, including governan
 
 Smart contracts are prone to a number of security issues, including the following:
 
-1. Reentrancy attacks: These attacks occur when a contract is called repeatedly before the previous call has finished, resulting in unanticipated effects.
-2. Integer overflow and underflow: These occur when arithmetic operations result in values that are larger or smaller than the range of the data type used.
-3. Logic errors: These are mistakes caused by defects in the design or implementation of the smart contract code.
-4. Access control issues: These issues arise when the smart contract fails to effectively restrict access to specific functions or data.
-5. Malicious code injection: When an attacker is able to insert harmful code into the smart contract code, these attacks occur.
+1. [Reentrancy attacks](https://consensys.github.io/smart-contract-best-practices/attacks/reentrancy/): These attacks occur when a contract is called repeatedly before the previous call has finished, resulting in unanticipated effects.
+2. [Integer overflow and underflow](https://blog.solidityscan.com/integer-overflow-and-underflow-in-smart-contracts-9598032b5a99): These occur when arithmetic operations result in values that are larger or smaller than the range of the data type used.
+3. [Logic errors](https://blog.tenderly.co/how-to-debug-common-smart-contract-errors/#logic-errors): These are mistakes caused by defects in the design or implementation of the smart contract code.
+4. [Access control issues](https://blog.solidityscan.com/access-control-vulnerabilities-in-smart-contracts-a31757f5d707): These issues arise when the smart contract fails to effectively restrict access to specific functions or data.
+5. [Malicious code injection](https://slowmist.medium.com/analysis-of-premint-malicious-code-injection-4051976fd201): When an attacker is able to insert harmful code into the smart contract code, these attacks occur.
 
 ## Introduction to Mythril
 
@@ -92,9 +93,9 @@ analysis:
 
 In this configuration file, you specified the Celo node that Mythril should connect to using the RPC URL for the [Celo testnet](https://forno.celo.org). You also specified the contract name for the voting system smart contract you will implement later in this tutorial.
 
-Finally, we include the `ether.transfer` module to enable detection of reentrancy attacks.
+Finally, we include the `ether.transfer` module to enable the detection of reentrancy attacks.
 
-## Analyzing Smart Contracts with Mythril
+## Analyzing Smart Contracts With Mythril
 
 To analyze a smart contract with Mythril, follow these steps:
 
@@ -131,7 +132,7 @@ To maintain the security of smart contracts on the Celo blockchain, best practic
 
 5. Perform regular code reviews: Conduct regular code reviews of smart contracts to detect and fix vulnerabilities.
 
-## Implementing a Voting System Smart Contract on Celo with Mythril
+## Implementing a Voting System Smart Contract on Celo With Mythril
 
 Let’s now implement a simple voting system smart contract on the Celo blockchain and analyze it with Mythril.
 
@@ -158,20 +159,37 @@ contract VotingSystem {
     address public owner;
     mapping(string => uint) public candidateVotes;
     string[] public candidateList;
+    mapping(address => mapping(string => bool)) public hasVoted;
+    mapping(string => bool) public isCandidate;
 
     constructor() {
         owner = msg.sender;
     }
 
-    function addCandidate(string memory _candidateName) public {
+    modifier onlyOwner(){
         require(msg.sender == owner, "Only the owner can add candidates");
+        _;
+    }
+
+    /**
+        * @notice Allows the admin to add a candidate
+        * @param _candidateName The name of the candidate
+    */
+    function addCandidate(string memory _candidateName) public {
+        require(bytes(_candidateName).length > 0, "Empty candidate name");
+        require(!isCandidate[_candidateName], "Already a candidate");
         candidateList.push(_candidateName);
         candidateVotes[_candidateName] = 0;
     }
 
+    /**
+        * @notice Allow users to vote for a candidate
+        * @param _candidateName The name of the candidate
+    */
     function voteForCandidate(string memory _candidateName) public {
-        require(bytes(_candidateName).length > 0, "Candidate name cannot be empty");
-        require(candidateVotes[_candidateName] >= 0, "Candidate does not exist");
+        require(isCandidate[_candidateName], "Already a candidate");
+        require(!hasVoted[msg.sender][_candidateName], "You have already voted");
+        hasVoted[msg.sender][_candidateName] = true;
         candidateVotes[_candidateName]++;
     }
 
@@ -184,7 +202,7 @@ contract VotingSystem {
 
 Let's go through the code together;
 
-1. `address public owner`: This is a state variable stores the address of the owner of the contract. The `public` keyword makes this variable readable by anyone on the blockchain.
+1. `address public owner`: This is a state variable that stores the address of the owner of the contract. The `public` keyword makes this variable readable by anyone on the blockchain.
 
 2. `mapping(string => uint) public candidateVotes`: This is a mapping that associates a string (the candidate's name) with a uint (the candidate's vote count). The `public` keyword makes this mapping readable by anyone on the blockchain.
 
@@ -194,12 +212,12 @@ Let's go through the code together;
 
 5. `function addCandidate(string memory _candidateName) public`: This is a function that allows the contract owner to add a candidate to the election. It takes a string argument `_candidateName` which is the name of the candidate being added. The `require` statement checks that the function is being called by the owner of the contract, and then adds the candidate's name to the `candidateList` array and sets their vote count to 0.
 
-6. `function voteForCandidate(string memory _candidateName) public`: This is a function that allows anyone to cast a vote for a candidate. It takes a string argument `_candidateName` which is the name of the candidate being voted for. The `require` statements check that the candidate's name is not empty and that the candidate actually exists in the `candidateList` array. If both of these conditions are met, the candidate's vote count is incremented by 1.
+6. `function voteForCandidate(string memory _candidateName) public`: This is a function that allows anyone to cast a vote for a candidate. It takes a string argument `_candidateName` which is the name of the candidate being voted for. The `require` statements check that the candidate's name is not empty and that the candidate exists in the `candidateList` array. If both of these conditions are met, the candidate's vote count is incremented by 1.
 
-7. `function getCandidateVotes(string memory _candidateName) public view returns (uint)`: This is a function that allows anyone to check the vote count for a specific candidate. It takes a string argument `_candidateName` which is the name of the candidate being queried, and returns the candidate's vote count.
+7. `function getCandidateVotes(string memory _candidateName) public view returns (uint)`: This is a function that allows anyone to check the vote count for a specific candidate. It takes a string argument `_candidateName` which is the name of the candidate being queried and returns the candidate's vote count.
 
 
-## Securing the Smart Contract with Mythril
+## Securing the Smart Contract With Mythril
 
 Let's now use Mythril to analyze the `votingSymstem.sol` contract for potential security vulnerabilities. Here are the steps:
 
@@ -259,9 +277,10 @@ To remedy this vulnerability, we can modify the `addCandidate` function to only 
 
 ```solidity
 function addCandidate(string memory name) public onlyOwner {
-    require(candidates[msg.sender].name == "", "A candidate with this address already exists.");
-    candidates[msg.sender] = Candidate(name, 0);
-    candidateAddresses.push(msg.sender);
+        require(bytes(_candidateName).length > 0, "Empty candidate name");
+        require(!isCandidate[_candidateName], "Already a candidate");
+        candidateList.push(_candidateName);
+        candidateVotes[_candidateName] = 0;
 }
 ```
 
@@ -363,7 +382,7 @@ This will compile the smart contract and generate the artifacts in the artifacts
 
 Next, let's write some tests for the smart contract. Create a new file named `votingSystem.test.js` in the test directory and add the following code:
 
-```javacript
+```javascript
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
