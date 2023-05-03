@@ -90,6 +90,7 @@ analysis:
   modules:
     - mythril.analysis.modules.ether.transfer
 ```
+Here is a [link](https://marketplace.visualstudio.com/items?itemName=MythX.mythxvsc) that provides an alternative method for installing and using Mythril with your smart contract.
 
 In this configuration file, you specified the Celo node that Mythril should connect to using the RPC URL for the [Celo testnet](https://forno.celo.org). You also specified the contract name for the voting system smart contract you will implement later in this tutorial.
 
