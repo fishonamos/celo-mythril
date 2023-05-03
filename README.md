@@ -156,46 +156,60 @@ Below is the code for the voting system smart contract:
 pragma solidity ^0.8.0;
 
 contract VotingSystem {
-    address public owner;
-    mapping(string => uint) public candidateVotes;
-    string[] public candidateList;
-    mapping(address => mapping(string => bool)) public hasVoted;
-    mapping(string => bool) public isCandidate;
+address public owner;
+string[] public candidateList;
+mapping(string => uint) public candidateVotes;
+mapping(string => bool) public isCandidate;
+mapping(address => bool) public hasVoted;
+uint public winningVoteCount;
+string public winningCandidate;
+constructor() {
+    owner = msg.sender;
+}
 
-    constructor() {
-        owner = msg.sender;
-    }
+modifier onlyOwner(){
+    require(msg.sender == owner, "Only the owner can add candidates");
+    _;
+}
 
-    modifier onlyOwner(){
-        require(msg.sender == owner, "Only the owner can add candidates");
-        _;
-    }
+function addCandidate(string memory _candidateName) public onlyOwner {
+    require(bytes(_candidateName).length > 0, "Empty candidate name");
+    require(!isCandidate[_candidateName], "Already a candidate");
+    candidateList.push(_candidateName);
+    isCandidate[_candidateName] = true;
+}
 
-    /**
-        * @notice Allows the admin to add a candidate
-        * @param _candidateName The name of the candidate
-    */
-    function addCandidate(string memory _candidateName) public {
-        require(bytes(_candidateName).length > 0, "Empty candidate name");
-        require(!isCandidate[_candidateName], "Already a candidate");
-        candidateList.push(_candidateName);
-        candidateVotes[_candidateName] = 0;
+function voteForCandidate(string memory _candidateName) public {
+    require(isCandidate[_candidateName], "Invalid candidate");
+    require(!hasVoted[msg.sender], "You have already voted");
+    hasVoted[msg.sender] = true;
+    candidateVotes[_candidateName]++;
+    if (candidateVotes[_candidateName] > winningVoteCount) {
+        winningVoteCount = candidateVotes[_candidateName];
+        winningCandidate = _candidateName;
     }
+}
 
-    /**
-        * @notice Allow users to vote for a candidate
-        * @param _candidateName The name of the candidate
-    */
-    function voteForCandidate(string memory _candidateName) public {
-        require(isCandidate[_candidateName], "Already a candidate");
-        require(!hasVoted[msg.sender][_candidateName], "You have already voted");
-        hasVoted[msg.sender][_candidateName] = true;
-        candidateVotes[_candidateName]++;
-    }
+function getCandidateVotes(string memory _candidateName) public view returns (uint) {
+    return candidateVotes[_candidateName];
+}
 
-    function getCandidateVotes(string memory _candidateName) public view returns (uint) {
-        return candidateVotes[_candidateName];
+function removeCandidate(string memory _candidateName) public onlyOwner {
+    require(isCandidate[_candidateName], "Invalid candidate");
+    for (uint i = 0; i < candidateList.length; i++) {
+        if (keccak256(bytes(candidateList[i])) == keccak256(bytes(_candidateName))) {
+            candidateList[i] = candidateList[candidateList.length - 1];
+            candidateList.pop();
+            isCandidate[_candidateName] = false;
+            candidateVotes[_candidateName] = 0;
+            if (keccak256(bytes(_candidateName)) == keccak256(bytes(winningCandidate))) {
+                winningCandidate = "";
+                winningVoteCount = 0;
+            }
+            break;
+        }
     }
+}
 }
 ```
 
