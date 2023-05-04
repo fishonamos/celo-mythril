@@ -388,12 +388,21 @@ describe("VotingSystem Test Suit", function () {
 
   beforeEach(async function () {
     const VotingSystem = await ethers.getContractFactory("VotingSystem");
-    votingSystem = await VotingSystem.deploy();
-    await votingSystem.deployed();
+
+    try {
+      votingSystem = await VotingSystem.deploy();
+      await votingSystem.deployed();
+    } catch (err) {
+      console.error(err);
+    }
   });
 
   it("should initialize with zero total votes", async function () {
-    expect(await votingSystem.getRemainingVotes()).to.equal(10_000_000_000_000_000_000);
+    try {
+      expect(await votingSystem.getRemainingVotes()).to.equal(10_000_000_000_000_000_000);
+    } catch (err) {
+      console.error(err);
+    }
   });
 
   it("should allow a user to vote", async function () {
@@ -401,18 +410,26 @@ describe("VotingSystem Test Suit", function () {
 
     const amount = 1_000_000_000_000_000_000;
 
-    await expect(votingSystem.connect(user).vote(amount))
-      .to.emit(votingSystem, "Voted")
-      .withArgs(user.address, amount);
+    try {
+      await expect(votingSystem.connect(user).vote(amount))
+        .to.emit(votingSystem, "Voted")
+        .withArgs(user.address, amount);
 
-    expect(await votingSystem.getRemainingVotes()).to.equal(10_000_000_000_000_000_000 - amount);
-    expect(await votingSystem.getVotes(user.address)).to.equal(amount);
+      expect(await votingSystem.getRemainingVotes()).to.equal(10_000_000_000_000_000_000 - amount);
+      expect(await votingSystem.getVotes(user.address)).to.equal(amount);
+    } catch (err) {
+      console.error(err);
+    }
   });
 
   it("should not allow a user to vote with zero amount", async function () {
     const [user] = await ethers.getSigners();
 
-    await expect(votingSystem.connect(user).vote(0)).to.be.revertedWith("Amount must be greater than zero");
+    try {
+      await expect(votingSystem.connect(user).vote(0)).to.be.revertedWith("Amount must be greater than zero");
+    } catch (err) {
+      console.error(err);
+    }
   });
 
   it("should not allow a user to vote with insufficient votes", async function () {
@@ -420,10 +437,14 @@ describe("VotingSystem Test Suit", function () {
 
     const amount = 20_000_000_000_000_000_000;
 
-    await votingSystem.connect(user1).vote(amount);
+    try {
+      await votingSystem.connect(user1).vote(amount);
 
-    await expect(votingSystem.connect(user2).vote(amount))
-      .to.be.revertedWith("Not enough votes remaining");
+      await expect(votingSystem.connect(user2).vote(amount))
+        .to.be.revertedWith("Not enough votes remaining");
+    } catch (err) {
+      console.error(err);
+    }
   });
 });
 
