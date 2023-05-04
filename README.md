@@ -161,30 +161,39 @@ Below is the code for the voting system smart contract:
 pragma solidity ^0.8.0;
 
 contract VotingSystem {
-    address public owner;
-    mapping(string => uint) public candidateVotes;
-    string[] public candidateList;
+    address public owner; // the address of the contract owner
+    mapping(string => uint) public candidateVotes; // mapping of candidate names to vote counts
+    string[] public candidateList; // list of all candidate names
 
     constructor() {
-        owner = msg.sender;
+        owner = msg.sender; // set the contract owner to the address that deployed the contract
     }
 
     function addCandidate(string memory _candidateName) public {
-        require(msg.sender == owner, "Only the owner can add candidates");
-        candidateList.push(_candidateName);
-        candidateVotes[_candidateName] = 0;
+        require(msg.sender == owner, "Only the owner can add candidates"); // only the contract owner can add candidates
+        require(bytes(_candidateName).length > 0, "Candidate name cannot be empty"); // make sure the candidate name is not empty
+        require(candidateVotes[_candidateName] == 0, "Candidate already exists"); // make sure the candidate doesn't already exist
+        candidateList.push(_candidateName); // add the candidate name to the list
+        candidateVotes[_candidateName] = 0; // set the initial vote count for the candidate to zero
     }
 
     function voteForCandidate(string memory _candidateName) public {
-        require(bytes(_candidateName).length > 0, "Candidate name cannot be empty");
-        require(candidateVotes[_candidateName] >= 0, "Candidate does not exist");
-        candidateVotes[_candidateName]++;
+        require(bytes(_candidateName).length > 0, "Candidate name cannot be empty"); // make sure the candidate name is not empty
+        require(candidateVotes[_candidateName] >= 0, "Candidate does not exist"); // make sure the candidate exists
+        for (uint i = 0; i < candidateList.length; i++) {
+            if (keccak256(bytes(candidateList[i])) == keccak256(bytes(_candidateName))) {
+                candidateVotes[_candidateName]++; // increment the vote count for the candidate
+                return;
+            }
+        }
+        revert("Candidate does not exist");
     }
 
     function getCandidateVotes(string memory _candidateName) public view returns (uint) {
-        return candidateVotes[_candidateName];
+        return candidateVotes[_candidateName]; // return the vote count for the specified candidate
     }
 }
+
 ```
 
 Let's go through the code together:
@@ -295,53 +304,58 @@ Install the `@celo/contractkit` package which will allow us to interact with the
 Next, you need to configure Hardhat to use the Celo network. In the root directory of your project, create a new file named `hardhat.config.js` and add the following code:
 
 ```javascript
+// Require the necessary modules and dependencies
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-ethers");
 require("hardhat");
 
+// Load environment variables from the .env file
 const dotenv = require('dotenv');
 dotenv.config();
 
+// Define the Celo testnet network configuration object
 const celoTestnet = {
-  url: process.env.CELO_TESTNET_RPC_URL,
-  accounts: [process.env.CELO_TESTNET_PRIVATE_KEY],
+  url: process.env.CELO_TESTNET_RPC_URL, // URL of the Celo testnet RPC endpoint
+  accounts: [process.env.CELO_TESTNET_PRIVATE_KEY], // Private key of the account to use for deploying contracts and transactions
 };
 
+// Export the Hardhat configuration object
 module.exports = {
   networks: {
-    celo: celoTestnet,
+    celo: celoTestnet, // Use the Celo testnet network configuration
   },
   solidity: {
-    version: "0.8.4",
+    version: "0.8.4", // Version of Solidity to use for compiling contracts
     settings: {
       optimizer: {
-        enabled: true,
-        runs: 200,
+        enabled: true, // Enable the Solidity optimizer
+        runs: 200, // Set the number of runs for the optimizer
       },
     },
   },
   paths: {
-    sources: "./contracts",
-    tests: "./test",
-    cache: "./cache",
-    artifacts: "./artifacts",
+    sources: "./contracts", // Path to the contract source files
+    tests: "./test", // Path to the test files
+    cache: "./cache", // Path to the cache directory
+    artifacts: "./artifacts", // Path to the artifacts directory
   },
   namedAccounts: {
     deployer: {
-      default: 0,
+      default: 0, // Use the first account as the default deployer
     },
   },
   mocha: {
-    timeout: 20000,
+    timeout: 20000, // Set the timeout for Mocha tests
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: process.env.ETHERSCAN_API_KEY, // API key for Etherscan verification
   },
   hardhat: {
-    gas: "auto",
-    gasPrice: "auto",
+    gas: "auto", // Set gas limit to auto
+    gasPrice: "auto", // Set gas price to auto
   },
 };
+
 ```
 
 In the above code, we require some Hardhat plugins and define the configuration for the Celo network. We also set the Solidity compiler version, the optimizer settings and the file paths for our project.
@@ -373,7 +387,7 @@ describe("VotingSystem Test Suit", function () {
   let votingSystem;
 
   beforeEach(async function () {
-    const VotingSystem = await ethers.getContractFactory("VotingSytem");
+    const VotingSystem = await ethers.getContractFactory("VotingSystem");
     votingSystem = await VotingSystem.deploy();
     await votingSystem.deployed();
   });
@@ -388,7 +402,7 @@ describe("VotingSystem Test Suit", function () {
     const amount = 1_000_000_000_000_000_000;
 
     await expect(votingSystem.connect(user).vote(amount))
-      .to.emit(voting, "Voted")
+      .to.emit(votingSystem, "Voted")
       .withArgs(user.address, amount);
 
     expect(await votingSystem.getRemainingVotes()).to.equal(10_000_000_000_000_000_000 - amount);
@@ -412,6 +426,7 @@ describe("VotingSystem Test Suit", function () {
       .to.be.revertedWith("Not enough votes remaining");
   });
 });
+
 ```
 
 The `beforeEach` function deploys a fresh instance of the `Voting` contract before each test.
